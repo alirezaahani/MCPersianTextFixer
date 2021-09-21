@@ -19,8 +19,7 @@ public abstract class TextRendererMixin {
 	 */
 	@Overwrite
 	public String mirror(String text) throws ArabicShapingException {
-		PersianTextFixer fixer = new PersianTextFixer();
-		return fixer.convert(text);
+		return PersianTextFixer.fixAll(text);
 	}
 
 	/**
@@ -29,8 +28,7 @@ public abstract class TextRendererMixin {
 	 */
 	@Overwrite
 	public String trimToWidth(String text, int maxWidth) throws ArabicShapingException {
-		PersianTextFixer fixer = new PersianTextFixer();
-		return fixer.convert(text);
+		return PersianTextFixer.fixAll(text);
 	}
 
 	/**
@@ -40,11 +38,10 @@ public abstract class TextRendererMixin {
 	@Overwrite
 	private float drawLayer(OrderedText text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, boolean seeThrough, int underlineColor, int light) throws ArabicShapingException {
 		GiveMeTheString visitor = new GiveMeTheString();
-		PersianTextFixer fixer = new PersianTextFixer();
 		var textRenderer = (TextRenderer) (Object) this;
 
 		text.accept(visitor);
-		String normal_text = fixer.convert(visitor.toString());
+		String normal_text = PersianTextFixer.fixAll(PersianTextFixer.fixReverse(visitor.toString()));
 
 		text = OrderedText.styledForwardsVisitedString(normal_text, Style.EMPTY);
 

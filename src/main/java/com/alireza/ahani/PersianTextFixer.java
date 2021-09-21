@@ -6,17 +6,57 @@ import com.ibm.icu.text.Bidi;
 
 public class PersianTextFixer {
 
-    public String convert(String input) throws ArabicShapingException {
-        input = input.replace("ی", "ي")
+    public static String fixChars(String text) {
+        text = text.replace("ی", "ي")
                 .replace("ک", "ك")
                 .replace("چ", "ج")
                 .replace("گ", "ك")
-                .replace("پ", "ب");
+                .replace("پ", "ب")
+                .replace("\u200C", " ");
 
-        Bidi bidi = new Bidi((new ArabicShaping(ArabicShaping.LETTERS_SHAPE)).shape(input), Bidi.DIRECTION_DEFAULT_RIGHT_TO_LEFT);
+        return text;
+    }
+
+    public static String fixReordering(String text) throws  ArabicShapingException {
+        Bidi bidi = new Bidi((new ArabicShaping(ArabicShaping.LETTERS_SHAPE)).shape(text), Bidi.DIRECTION_DEFAULT_RIGHT_TO_LEFT);
         bidi.setReorderingMode(Bidi.REORDER_DEFAULT);
-        input = bidi.writeReordered(Bidi.DO_MIRRORING);
+        text = bidi.writeReordered(Bidi.DO_MIRRORING);
 
-        return input;
+        return text;
+    }
+
+    public static String fixReverse(String text) {
+        /* Credit to HardCoded from SciCraft's discord */
+
+        StringBuilder result = new StringBuilder();
+        int len = text.length();
+
+        int bufferLen = 0;
+        char[] buffer = new char[len];
+        for(int i = len - 1; i >= 0; i--) {
+            char c = text.charAt(i);
+
+            boolean isEnglish = ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c == '(') || (c == ')'));
+            if(isEnglish) {
+                buffer[len - (++bufferLen)] = c;
+            } else {
+                if(bufferLen > 0) {
+                    result.append(buffer, len - bufferLen, bufferLen);
+                    bufferLen = 0;
+                }
+
+                result.append(c);
+            }
+        }
+
+        if(bufferLen > 0) {
+            result.append(buffer, len - bufferLen, bufferLen);
+        }
+
+        return result.toString();
+    }
+
+    public static String fixAll(String text) throws ArabicShapingException {
+        return fixReordering(fixChars(text));
     }
 }
